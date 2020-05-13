@@ -1,37 +1,96 @@
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.*;
-
 import java.awt.*;
-import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.border.*;
 
+public class SudokuFrame extends JFrame {
 
- public class SudokuFrame extends JFrame {
-	
+	private final JTextArea puzzleText;
+	private final JTextArea solutionText;
+
+	private final JButton checkButton;
+	private final JCheckBox autoCheckBox;
+
 	public SudokuFrame() {
 		super("Sudoku Solver");
-		
-		// YOUR CODE HERE
-		
-		// Could do this:
-		// setLocationByPlatform(true);
-		
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		setLayout(new BorderLayout(4, 4));
+
+		puzzleText = new JTextArea(15, 20);
+		puzzleText.setBorder(new TitledBorder("Puzzle"));
+		add(puzzleText, BorderLayout.CENTER);
+
+		solutionText = new JTextArea(15, 20);
+		solutionText.setBorder(new TitledBorder("Solution"));
+		add(solutionText, BorderLayout.EAST);
+
+		Box controlsBox = new Box(BoxLayout.X_AXIS);
+		add(controlsBox, BorderLayout.SOUTH);
+
+		checkButton = new JButton("Check");
+		controlsBox.add(checkButton);
+
+		autoCheckBox = new JCheckBox("Auto Check", true);
+		controlsBox.add(autoCheckBox);
+
 		pack();
-		setVisible(true);
+		addActionListeners();
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
-	
-	
+
+	private void addActionListeners() {
+		puzzleText.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				if (autoCheckBox.isSelected()) {
+					redrawSolutions();
+				}
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				if (autoCheckBox.isSelected()) {
+					redrawSolutions();
+				}
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				if (autoCheckBox.isSelected()) {
+					redrawSolutions();
+				}
+			}
+		});
+
+		checkButton.addActionListener(e -> redrawSolutions());
+	}
+
+	private void redrawSolutions() {
+		String solution = "";
+
+		try {
+			Sudoku sudoku = new Sudoku(Sudoku.textToGrid(puzzleText.getText()));
+			int solutions = sudoku.solve();
+			if (solutions > 0) {
+				solution = sudoku.getSolutionText();
+				solution += "Solutions: " + solutions + "\n";
+				solution += "Elapsed: " + sudoku.getElapsed() + " ms" + "\n";
+			}
+		} catch (Exception exception) {
+			solution = "Parsing problem";
+		}
+
+		solutionText.setText(solution);
+	}
+
 	public static void main(String[] args) {
-		// GUI Look And Feel
-		// Do this incantation at the start of main() to tell Swing
-		// to use the GUI LookAndFeel of the native platform. It's ok
-		// to ignore the exception.
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception ignored) { }
+		}
+		catch (Exception ignored) { }
 		
-		SudokuFrame frame = new SudokuFrame();
+		SudokuFrame sudokuFrame = new SudokuFrame();
+		sudokuFrame.setVisible(true);
 	}
 
 }
